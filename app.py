@@ -124,12 +124,21 @@ text_input = st.text_area("Enter your message:", height=100)
 
 if text_input:
     sentence_results = encode_full(text_input)
-    st.subheader("Results by Sentence:")
 
+    # Build the combined multi-line block for easy copying
+    combined_output = []
+    for item in sentence_results:
+        combined_output.append(item["connected"])
+        combined_output.append(item["pattern"])
+
+    full_copy_text = "\n".join(combined_output)
+
+    st.subheader("Encoded Output (Click copy icon at top right):")
+    st.code(full_copy_text, language="text")
+
+    st.markdown("---")
+    st.subheader("Sentence Breakdown:")
     for idx, item in enumerate(sentence_results, 1):
         st.markdown(f"**Sentence {idx}:** `{item['sentence']}`")
-        st.markdown("**Connected Roman String:**")
-        st.code(item["connected"])
-        st.markdown("**Word Length Pattern:**")
-        st.code(item["pattern"])
-        st.markdown("---")
+        st.write(f"Roman String: `{item['connected']}`")
+        st.write(f"Pattern: `{item['pattern']}`")
