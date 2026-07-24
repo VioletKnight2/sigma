@@ -15,7 +15,6 @@ def num_to_alphabet(num, is_upper):
     return chr(num + ord('a') - 1)
 
 def int_to_roman(n):
-    # Standard Roman numeral mapping (1 to 26 range needed for alphabet)
     mapping = [(10, 'X'), (9, 'IX'), (5, 'V'), (4, 'IV'), (1, 'I')]
     result = []
     for val, roman in mapping:
@@ -23,20 +22,6 @@ def int_to_roman(n):
             result.append(roman)
             n -= val
     return "".join(result)
-
-def roman_to_int(s):
-    # Standard Roman numeral parser handling subtraction logic natively
-    roman_map = {'I': 1, 'V': 5, 'X': 10}
-    total = 0
-    prev_val = 0
-    for char in reversed(s):
-        val = roman_map.get(char, 0)
-        if val < prev_val:
-            total -= val
-        else:
-            total += val
-            prev_val = val
-    return total
 
 def transform_word(word):
     if not word or not word.strip():
@@ -65,28 +50,62 @@ def transform_word(word):
                 result[i] = num_to_alphabet(new_val, c.isupper())
     return "".join(result)
 
-def encode_full(text):
-    # Preserve words and whitespace chunks using regex regex split pattern
-    tokens = re.findall(r'\S+|\s+', text)
-    ciphered = "".join([transform_word(t) for t in tokens])
-    reversed_text = ciphered[::-1]
+def process_sentence(sentence):
+    # Extract only words (alphanumeric sequences)
+    words = re.findall(r'\b\w+\b', sentence)
     
-    roman_tokens = []
-    for char in reversed_text:
-        if char.isalpha():
-            roman_tokens.append(int_to_roman(alphabet_to_num(char)))
-        else:
-            roman_tokens.append(char)
-            
-    return " ".join(roman_tokens)
+    word_lengths = []
+    sentence_roman_tokens = []
+    
+    for word in words:
+        transformed = transform_word(word)
+        # Reverse word for tokenization
+        rev_word = transformed[::-1]
+        
+        # Convert alphabetic characters into Roman numeral tokens
+        roman_tokens = []
+        for char in rev_word:
+            if char.isalpha():
+                roman_tokens.append(int_to_roman(alphabet_to_num(char)))
+            else:
+                roman_tokens.append(char)
+                
+        word_lengths.append(str(len(roman_tokens)))
+        sentence_roman_tokens.append("".join(roman_tokens))
+        
+    connected_string = "".join(sentence_roman_tokens)
+    length_pattern = "".join(word_lengths)
+    
+    return connected_string, length_pattern
+
+def encode_full(text):
+    # Split text by sentence delimiters (. ! ?) while keeping delimiters
+    sentences = [s.strip() for s in re.split(r'(?<=[.!?])\s+', text) if s.strip()]
+    
+    results = []
+    for sentence in sentences:
+        connected_str, length_pat = process_sentence(sentence)
+        results.append({
+            "sentence": sentence,
+            "connected": connected_str,
+            "pattern": length_pat
+        })
+    return results
 
 # Streamlit App UI
 st.set_page_config(page_title="Reflection Cipher App", page_icon="🏛️")
-st.title("🏛️ Symmetrical Roman Cipher")
+st.title("🏛️ Symmetrical Roman Cipher (Sentence Connected)")
 
 text_input = st.text_area("Enter your message:", height=100)
 
 if text_input:
-    result = encode_full(text_input)
-    st.subheader("Output:")
-    st.code(result)
+    sentence_results = encode_full(text_input)
+    st.subheader("Results by Sentence:")
+    
+    for idx, item in enumerate(sentence_results, 1):
+        st.markdown(f"**Sentence {idx}:** `{item['sentence']}`")
+        st.write(**Connected Roman String:**)
+        st.code(item['connected'])
+        st.write(**Word Length Pattern:**)
+        st.code(item['pattern'])
+        st.markdown("---")
