@@ -12,8 +12,7 @@ def alphabet_to_num(char):
 
 
 def num_to_alphabet(num, is_upper):
-    """Converts a 1-26 mapped integer (handling negative wrapping) back to a character."""
-    # (num - 1) % 26 converts 1..26 to 0..25 with correct modular arithmetic for negative values
+    """Converts a 1-26 mapped integer back to a character."""
     idx = (num - 1) % 26
     base = ord("A") if is_upper else ord("a")
     return chr(base + idx)
@@ -69,13 +68,13 @@ def transform_word(word):
 
 
 def process_sentence(sentence):
-    """Transforms words in a sentence, reverses them, converts to Roman numerals,
+    """Transforms words in a sentence, reverses them, converts letters to Roman
 
-    and tracks character length patterns.
+    numerals, and records the numeral length count for each letter.
     """
     words = re.findall(r"\b\w+\b", sentence)
 
-    word_lengths = []
+    numeral_counts = []
     sentence_roman_tokens = []
 
     for word in words:
@@ -84,20 +83,18 @@ def process_sentence(sentence):
         # Reverse word for tokenization
         rev_word = transformed[::-1]
 
-        # Convert alphabetic characters into Roman numeral tokens
-        roman_tokens = []
+        # Convert each letter to Roman numerals & record length of each numeral token
         for char in rev_word:
             if char.isalpha():
-                roman_tokens.append(int_to_roman(alphabet_to_num(char)))
+                roman_str = int_to_roman(alphabet_to_num(char))
+                sentence_roman_tokens.append(roman_str)
+                numeral_counts.append(str(len(roman_str)))
             else:
-                roman_tokens.append(char)
-
-        # Track the number of Roman tokens generated for each word
-        word_lengths.append(str(len(roman_tokens)))
-        sentence_roman_tokens.append("".join(roman_tokens))
+                sentence_roman_tokens.append(char)
+                numeral_counts.append("1")
 
     connected_string = "".join(sentence_roman_tokens)
-    length_pattern = "-".join(word_lengths) if word_lengths else ""
+    length_pattern = "".join(numeral_counts)
 
     return connected_string, length_pattern
 
